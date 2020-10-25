@@ -24,7 +24,10 @@ func (s *Stack) Pop() interface{} {
 }
 
 func (s *Stack) Peek() interface{} {
-	return s.head.value
+	if s.head != nil {
+		return s.head.value
+	}
+	return nil
 }
 
 func (s *Stack) Count() int {
