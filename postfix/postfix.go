@@ -4,52 +4,52 @@ import (
 	"github.com/Amror/ReGompiler/structures"
 )
 
-var operatorPrecedence = map[string]int{"|": 1, ".": 2, "*": 3, "+": 3, "?": 3}
-var operators = []string{"*", "+", "|", "?", "."}
+var operatorPrecedence = map[rune]int{'|': 1, '.': 2, '*': 3, '+': 3, '?': 3}
+var operators = []rune{'*', '+', '|', '?', '.'}
 
-func FormatInfix(exp string) string {
-	newexp := ""
+func FormatInfix(exp string) []rune {
+	rexp := []rune(exp)
+	newrexp := make([]rune, 0, len(rexp))
 
 	for pos, char := range exp {
-		char := string(char)
-		if pos+1 < len(exp) {
-			char2 := string(exp[pos+1])
-			newexp += char
-			if char != "(" && char2 != ")" && char != "|" && !InArray(char2, operators) {
-				newexp += "."
+		if pos+1 < len(rexp) {
+			char2 := rexp[pos+1]
+			newrexp = append(newrexp, char)
+			if char != '(' && char2 != ')' && char != '|' && !InArray(char2, operators) {
+				newrexp = append(newrexp, '.')
 			}
 		}
+
 	}
-	newexp += string(exp[len(exp)-1])
-	return newexp
+	newrexp = append(newrexp, rexp[len(rexp)-1])
+	return newrexp
 }
 
-func InArray(val string, list []string) bool {
-	for _, word := range list {
-		if val == word {
+func InArray(val rune, list []rune) bool {
+	for _, char := range list {
+		if val == char {
 			return true
 		}
 	}
 	return false
 }
 
-func higherPrecendence(op1, op2 string) bool {
+func higherPrecendence(op1, op2 rune) bool {
 	return operatorPrecedence[op1] >= operatorPrecedence[op2]
 }
 
-func ToPostfix(infix string) structures.Queue {
+func ToPostfix(infix []rune) structures.Queue {
 	outputQ := &structures.Queue{}
 	opStack := &structures.Stack{}
 
 	for _, char := range infix {
-		char := string(char)
 		isOperator := InArray(char, operators)
 		if isOperator {
 			peek := opStack.Peek()
-			if peek == "(" {
+			if peek == '(' {
 				opStack.Push(char)
 			} else {
-				for opStack.Count() != 0 && higherPrecendence(peek.(string), char) {
+				for opStack.Count() != 0 && higherPrecendence(peek.(rune), char) {
 					outputQ.Insert(opStack.Pop())
 					peek = opStack.Peek()
 				}
@@ -58,10 +58,10 @@ func ToPostfix(infix string) structures.Queue {
 		} else {
 			// char is a symbol
 			switch char {
-			case "(":
+			case '(':
 				opStack.Push(char)
-			case ")":
-				for opStack.Peek() != "(" {
+			case ')':
+				for opStack.Peek() != '(' {
 					outputQ.Insert(opStack.Pop())
 				}
 				opStack.Pop()
@@ -80,9 +80,10 @@ func ToPostfix(infix string) structures.Queue {
 }
 
 func QueueToString(q structures.Queue) string {
-	output := ""
-	for i := 0; i < q.Count(); i++ {
-		output += q.Remove().(string)
+	length := q.Count()
+	output := make([]rune, 0, length)
+	for i := 0; i < length; i++ {
+		output = append(output, q.Remove().(rune))
 	}
-	return output
+	return string(output)
 }

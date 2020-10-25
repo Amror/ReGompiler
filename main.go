@@ -7,9 +7,10 @@ import (
 )
 
 func main() {
-	output := postfix.FormatInfix("abc|bcd")
-	fmt.Println(output)
+	output := postfix.FormatInfix("a(a|b)*b")
+	fmt.Println(string(output))
 	output2 := postfix.ToPostfix(output)
 	pt := &output2
 	fmt.Println(pt.String())
+	fmt.Println(postfix.QueueToString(*pt))
 }
