@@ -1,17 +1,22 @@
 package postfix
 
 import (
+	"errors"
+
 	"github.com/Amror/ReGompiler/structures"
 )
 
 var operatorPrecedence = map[rune]int{'|': 1, '.': 2, '*': 3, '+': 3, '?': 3}
 var operators = []rune{'*', '+', '|', '?', '.'}
 
-func FormatInfix(exp string) []rune {
+func FormatInfix(exp string) ([]rune, error) {
 	rexp := []rune(exp)
 	newrexp := make([]rune, 0, len(rexp))
 
 	for pos, char := range exp {
+		if char == '.' {
+			return []rune{}, errors.New("Concatenation operator inserted explicitly")
+		}
 		if pos+1 < len(rexp) {
 			char2 := rexp[pos+1]
 			newrexp = append(newrexp, char)
@@ -22,7 +27,7 @@ func FormatInfix(exp string) []rune {
 
 	}
 	newrexp = append(newrexp, rexp[len(rexp)-1])
-	return newrexp
+	return newrexp, nil
 }
 
 func InArray(val rune, list []rune) bool {
@@ -38,7 +43,7 @@ func higherPrecendence(op1, op2 rune) bool {
 	return operatorPrecedence[op1] >= operatorPrecedence[op2]
 }
 
-func ToPostfix(infix []rune) structures.Queue {
+func ToPostfix(infix []rune) (structures.Queue, error) {
 	outputQ := &structures.Queue{}
 	opStack := &structures.Stack{}
 
@@ -61,8 +66,11 @@ func ToPostfix(infix []rune) structures.Queue {
 			case '(':
 				opStack.Push(char)
 			case ')':
-				for opStack.Peek() != '(' {
+				for opStack.Count() != 0 && opStack.Peek() != '(' {
 					outputQ.Insert(opStack.Pop())
+				}
+				if opStack.Count() == 0 {
+					return structures.Queue{}, errors.New("Unmatched parentheses")
 				}
 				opStack.Pop()
 			default:
@@ -72,11 +80,16 @@ func ToPostfix(infix []rune) structures.Queue {
 		}
 	}
 
+	var toInsert rune
 	for opStack.Count() != 0 {
-		outputQ.Insert(opStack.Pop())
+		toInsert = opStack.Pop().(rune)
+		if toInsert == '(' {
+			return structures.Queue{}, errors.New("Unmatched parentheses")
+		}
+		outputQ.Insert(toInsert)
 	}
 
-	return *outputQ
+	return *outputQ, nil
 }
 
 func QueueToString(q structures.Queue) string {
